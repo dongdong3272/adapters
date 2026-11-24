@@ -54,9 +54,12 @@ backbone.
   workspace.
 - Verifier runs the upstream `evaluation/evaluate.py` byte-for-byte with a
   config root containing only the current task; reward is 1 for a full table
-  match and 0 otherwise.
+  match and 0 otherwise. Grading uses Harbor's separate-verifier mode
+  (`environment_mode = "separate"`): the agent image stays free of gold files,
+  `prediction.csv` is passed as an artifact, and a light `tests/Dockerfile`
+  runs the stdlib evaluator.
 - Gold results and configs live only in `tests/` and `solution/`, which are not
-  part of the image build context.
+  part of the agent image build context.
 
 ## Generated Task Structure
 
@@ -205,14 +208,14 @@ harbor run -p datasets/dataspace -a claude-code -m "<model>"
   runs inside the task container; the workspace is made non-writable with
   `chmod`, but an agent running as root can bypass this, and the container has
   network access because the agent must reach its model API. Neither affects
-  scoring: the verifier reads only `/mnt/output/prediction.csv`, and the gold
-  files are not in the image.
+  scoring: gold lives only in the separate verifier image, and the agent
+  output is transferred as a sanitized artifact.
 - Upstream accepts a prediction only when the harness exits cleanly; a file
   left after a timeout counts as missing. Harbor still runs the verifier after
   an agent timeout, so a prediction written before the timeout is scored.
   This will be checked during parity.
-- The verifier rejects a symlinked `prediction.csv`, because `tests/` (with
-  the gold file) is uploaded into the same container at verification time.
+- `test.sh` still rejects a symlinked `prediction.csv` as defense in depth;
+  Harbor's separate-verifier artifact upload already strips unsafe symlinks.
 - Several public tasks share identical gold tables (for example, three tasks
   have 12,962-row answers); this is upstream data, not an adapter artifact.
 

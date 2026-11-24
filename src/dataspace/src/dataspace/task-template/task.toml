@@ -1,5 +1,7 @@
 schema_version = "1.0"
 
+artifacts = ["/mnt/output/prediction.csv"]
+
 [task]
 name = "hkustdial/dataspace__{task_id}"
 description = "DataSpace {task_id}: answer an analytical question over a heterogeneous task-local workspace and return the complete result table."
@@ -21,6 +23,7 @@ timeout_sec = 1800.0
 
 [verifier]
 timeout_sec = 300.0
+environment_mode = "separate"
 
 [environment]
 build_timeout_sec = 1800.0
